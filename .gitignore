@@ -1,3 +1,6 @@
+# Environment (API locale)
+backend/.env
+
 # Miscellaneous
 *.class
 *.log

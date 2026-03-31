@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/env.php';
+lagoon_load_env();
+
 /**
  * @return array<string, mixed>
  */

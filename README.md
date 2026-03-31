@@ -60,9 +60,9 @@ flutter run
 
 ### URL de l’API
 
-Par défaut : `http://127.0.0.1:8080/api` (voir `lib/core/config/app_config.dart`).
+Par défaut (production) : `https://lagoon-padel-api.whiteprovider.net/api` (voir `lib/core/config/app_config.dart`).
 
-Pour un **émulateur Android** (accès à la machine hôte) :
+Pour pointer vers un **backend local** (émulateur Android → machine hôte) :
 
 ```bash
 flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8080/api
@@ -74,7 +74,7 @@ Pour un **appareil physique** sur le même réseau Wi‑Fi, utilisez l’IP loca
 flutter run --dart-define=API_BASE_URL=http://192.168.1.10:8080/api
 ```
 
-**Sécurité** : `android:usesCleartextTraffic` est activé pour faciliter le HTTP en développement. Pour la production, servez l’API en **HTTPS** et retirez le trafic en clair.
+**Sécurité** : le build **release** Android n’autorise pas le HTTP en clair (HTTPS par défaut). En **debug**, le trafic en clair reste possible pour tester contre un serveur local.
 
 ---
 

@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
-$allowedOrigin = getenv('CORS_ORIGIN') ?: '*';
+require __DIR__ . '/config/env.php';
+lagoon_load_env();
+
+$allowedOrigin = lagoon_env('CORS_ORIGIN', '*');
 header('Access-Control-Allow-Origin: ' . $allowedOrigin);
 header('Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
