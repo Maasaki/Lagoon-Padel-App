@@ -20,13 +20,19 @@ require __DIR__ . '/config/database.php';
 require __DIR__ . '/helpers/JsonResponse.php';
 require __DIR__ . '/helpers/Jwt.php';
 require __DIR__ . '/helpers/Slots.php';
+require __DIR__ . '/helpers/PayZenRest.php';
+require __DIR__ . '/helpers/PayZenIpn.php';
 require __DIR__ . '/models/User.php';
 require __DIR__ . '/models/Terrain.php';
 require __DIR__ . '/models/Reservation.php';
+require __DIR__ . '/models/AvailabilityBlocks.php';
 require __DIR__ . '/middleware/AuthMiddleware.php';
+require __DIR__ . '/middleware/AdminMiddleware.php';
 require __DIR__ . '/controllers/AuthController.php';
 require __DIR__ . '/controllers/TerrainController.php';
 require __DIR__ . '/controllers/ReservationController.php';
+require __DIR__ . '/controllers/PaymentController.php';
+require __DIR__ . '/controllers/AdminController.php';
 
 try {
     require __DIR__ . '/routes/api.php';

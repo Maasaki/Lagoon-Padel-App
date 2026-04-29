@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/theme/lagoon_theme.dart';
@@ -139,16 +140,41 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
 
     setState(() => _error = null);
     try {
-      await widget.api.createReservation(
+      final created = await widget.api.createReservation(
         terrainId: _terrainId,
         date: iso,
         startTime: start,
         endTime: end,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Réservation confirmée')),
-      );
+      final paymentUrl = created['payment_url'] as String?;
+      if (paymentUrl != null && paymentUrl.isNotEmpty) {
+        final uri = Uri.parse(paymentUrl);
+        final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (!mounted) return;
+        if (!opened) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Impossible d’ouvrir la page de paiement. Réessayez ou vérifiez votre navigateur.',
+              ),
+            ),
+          );
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Finalisez le paiement dans le navigateur. La réservation sera confirmée après paiement réussi.',
+            ),
+            duration: Duration(seconds: 6),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Réservation confirmée')),
+        );
+      }
       await _loadSlots();
     } catch (e) {
       if (mounted) {

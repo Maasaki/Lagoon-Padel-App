@@ -33,10 +33,29 @@ final class User
     /** @return array<string, mixed>|null */
     public function findById(int $id): ?array
     {
-        $stmt = $this->pdo->prepare('SELECT id, name, email, created_at FROM users WHERE id = :id LIMIT 1');
+        $stmt = $this->pdo->prepare(
+            'SELECT id, name, email, is_admin, created_at FROM users WHERE id = :id LIMIT 1'
+        );
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch();
         return $row === false ? null : $row;
+    }
+
+    public function isAdmin(int $id): bool
+    {
+        $stmt = $this->pdo->prepare('SELECT is_admin FROM users WHERE id = :id LIMIT 1');
+        $stmt->execute(['id' => $id]);
+        $v = $stmt->fetchColumn();
+        return $v !== false && (int) $v === 1;
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function listAll(): array
+    {
+        $stmt = $this->pdo->query(
+            'SELECT id, name, email, is_admin, created_at FROM users ORDER BY id ASC'
+        );
+        return $stmt->fetchAll();
     }
 
     public function emailExists(string $email): bool

@@ -59,9 +59,10 @@ final class AuthController
             'token_type' => 'Bearer',
             'expires_in' => $this->config['jwt_ttl_seconds'],
             'user' => [
-                'id' => $user['id'],
+                'id' => (int) $user['id'],
                 'name' => $user['name'],
                 'email' => $user['email'],
+                'is_admin' => ((int) ($user['is_admin'] ?? 0)) === 1,
             ],
         ]);
     }
@@ -105,6 +106,7 @@ final class AuthController
                 'id' => $id,
                 'name' => $user['name'],
                 'email' => $user['email'],
+                'is_admin' => ((int) ($user['is_admin'] ?? 0)) === 1,
             ],
         ]);
     }

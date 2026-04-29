@@ -1,45 +1,24 @@
 import 'package:flutter/material.dart';
 
-import '../core/theme/lagoon_theme.dart';
-
+/// Logo officiel [assets/logo_lagoon_padel.png].
 class LagoonLogo extends StatelessWidget {
-  const LagoonLogo({super.key, this.size = 72});
+  const LagoonLogo({super.key, this.size = 220});
 
+  /// Largeur maximale du logo (l’image garde ses proportions).
   final double size;
 
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
+        Image.asset(
+          'assets/logo_lagoon_padel.png',
           width: size,
-          height: size,
-          decoration: BoxDecoration(
-            color: LagoonColors.lagoon,
-            borderRadius: BorderRadius.circular(size * 0.22),
-            boxShadow: [
-              BoxShadow(
-                color: LagoonColors.lagoon.withValues(alpha: 0.35),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Icon(
-            Icons.sports_tennis_rounded,
-            size: size * 0.55,
-            color: Colors.white,
-          ),
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.high,
         ),
-        const SizedBox(height: 12),
-        Text(
-          'Lagoon Padel',
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.5,
-                color: const Color(0xFF1C1C1E),
-              ),
-        ),
+        const SizedBox(height: 10),
         Text(
           'Tahiti',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(

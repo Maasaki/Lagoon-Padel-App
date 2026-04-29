@@ -9,7 +9,9 @@ final class ReservationController
         private array $config,
         private Reservation $reservations,
         private Terrain $terrains,
-        private AuthMiddleware $auth
+        private AvailabilityBlocks $blocks,
+        private AuthMiddleware $auth,
+        private User $users
     ) {
     }
 
@@ -73,8 +75,55 @@ final class ReservationController
             return;
         }
 
-        $price = (int) $this->config['price_per_slot_xpf'];
+        if ($this->blocks->isTerrainDayBlocked($terrainId, $date)) {
+            JsonResponse::error(422, 'Ce terrain est fermé ce jour.', 'terrain_blocked');
+            return;
+        }
+        $blockedStarts = $this->blocks->blockedSlotStartTimes($terrainId, $date);
+        $blockedFlip = array_flip($blockedStarts);
+        if (isset($blockedFlip[$startNorm])) {
+            JsonResponse::error(422, 'Ce créneau est bloqué.', 'slot_blocked');
+            return;
+        }
 
+        $pz = $this->config['payzen'] ?? [];
+        $restUser = trim((string) ($pz['rest_username'] ?? ''));
+        $restPass = trim((string) ($pz['rest_password'] ?? ''));
+        $pubKey = trim((string) ($pz['public_key'] ?? ''));
+        if ($restUser === '' || $restPass === '' || $pubKey === '') {
+            $detail = [];
+            if ($restUser === '') {
+                $detail[] = 'PAYZEN_SHOP_ID (ou PAYZEN_REST_USERNAME)';
+            }
+            if ($restPass === '') {
+                $detail[] = 'PAYZEN_API_KEY_TEST / PAYZEN_API_KEY_PROD (ou PAYZEN_API_KEY selon PAYZEN_MODE)';
+            }
+            if ($pubKey === '') {
+                $detail[] = 'PAYZEN_PUBLIC_KEY (ligne complète du type boutique:testpublickey_… dans l’extranet OSB)';
+            }
+            JsonResponse::error(
+                503,
+                'Paiement PayZen incomplet sur le serveur : ' . implode(', ', $detail) . '.',
+                'payzen_not_configured'
+            );
+            return;
+        }
+
+        $userRow = $this->users->findById($userId);
+        $email = strtolower(trim((string) ($userRow['email'] ?? '')));
+        if ($email === '') {
+            JsonResponse::error(422, 'Email du compte requis pour le paiement.', 'email_required');
+            return;
+        }
+
+        $price = (int) $this->config['price_per_slot_xpf'];
+        $ttlMin = max(5, (int) ($pz['pending_ttl_minutes'] ?? 30));
+        $expiresAt = (new DateTimeImmutable('now'))->modify("+{$ttlMin} minutes")->format('Y-m-d H:i:s');
+        $orderId = 'LR' . bin2hex(random_bytes(16));
+
+        $this->reservations->cleanupExpiredPending();
+
+        $newId = 0;
         try {
             $this->pdo->beginTransaction();
             if ($this->reservations->existsForSlot($terrainId, $date, $startNorm, $endNorm)) {
@@ -82,7 +131,17 @@ final class ReservationController
                 JsonResponse::error(409, 'Ce créneau n\'est plus disponible.', 'slot_taken');
                 return;
             }
-            $newId = $this->reservations->create($userId, $terrainId, $date, $startNorm, $endNorm, $price);
+            $newId = $this->reservations->create(
+                $userId,
+                $terrainId,
+                $date,
+                $startNorm,
+                $endNorm,
+                $price,
+                'pending',
+                $expiresAt,
+                $orderId
+            );
             $this->pdo->commit();
         } catch (PDOException $e) {
             if ($this->pdo->inTransaction()) {
@@ -96,6 +155,16 @@ final class ReservationController
             return;
         }
 
+        try {
+            $tokenAnswer = PayZenRest::createPayment($pz, $price, $orderId, $email);
+            $paymentUrl = PayZenRest::paymentPageUrl($pz, $tokenAnswer['formToken']);
+        } catch (Throwable $e) {
+            error_log('PayZen CreatePayment: ' . $e->getMessage());
+            $this->reservations->deleteByIdBare($newId);
+            JsonResponse::error(502, 'Impossible de démarrer le paiement sécurisé.', 'payment_init_failed');
+            return;
+        }
+
         JsonResponse::send(201, [
             'id' => $newId,
             'terrain_id' => $terrainId,
@@ -103,6 +172,10 @@ final class ReservationController
             'start_time' => substr($startNorm, 0, 5),
             'end_time' => substr($endNorm, 0, 5),
             'price' => $price,
+            'payment_status' => 'pending',
+            'payment_expires_at' => $expiresAt,
+            'payzen_mode' => (string) ($pz['mode'] ?? 'test'),
+            'payment_url' => $paymentUrl,
         ]);
     }
 
@@ -120,6 +193,8 @@ final class ReservationController
                 'start_time' => substr((string) $row['start_time'], 0, 5),
                 'end_time' => substr((string) $row['end_time'], 0, 5),
                 'price' => (int) $row['price'],
+                'payment_status' => (string) $row['payment_status'],
+                'payment_expires_at' => $row['payment_expires_at'],
                 'created_at' => $row['created_at'],
             ];
         }

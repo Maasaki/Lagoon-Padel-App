@@ -161,6 +161,8 @@ class ReservationsScreenState extends State<ReservationsScreen> {
                   final start = r['start_time'] as String? ?? '';
                   final end = r['end_time'] as String? ?? '';
                   final price = (r['price'] as num?)?.toInt() ?? 0;
+                  final paymentStatus = r['payment_status'] as String? ?? 'paid';
+                  final pendingPayment = paymentStatus == 'pending';
                   return Material(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
@@ -180,6 +182,16 @@ class ReservationsScreenState extends State<ReservationsScreen> {
                           Text('$dayLabel · $start – $end'),
                           const SizedBox(height: 4),
                           Text(formatXpf(price)),
+                          if (pendingPayment) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              'Paiement en attente — finalisez sur PayZen si ce n’est pas déjà fait.',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.orange.shade800,
+                              ),
+                            ),
+                          ],
                           Align(
                             alignment: Alignment.centerRight,
                             child: TextButton.icon(

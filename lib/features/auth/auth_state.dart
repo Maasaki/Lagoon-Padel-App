@@ -27,6 +27,12 @@ class AuthState extends ChangeNotifier {
   Map<String, dynamic>? get user => _user;
   String? get userName => _user?['name'] as String?;
 
+  /// Compte administrateur (JWT + champ `is_admin` renvoyé par l’API).
+  bool get isAdmin {
+    final v = _user?['is_admin'];
+    return v == true || v == 1;
+  }
+
   Future<void> _load() async {
     try {
       _token = await _storage.read(key: SecureKeys.jwt);

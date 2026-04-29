@@ -157,6 +157,94 @@ class ApiClient {
   Future<void> deleteReservation(int id) async {
     await _dio.delete<void>('/reservations/$id');
   }
+
+  // ——— Administration (JWT + compte admin côté serveur) ———
+
+  Future<List<Map<String, dynamic>>> adminUsers() async {
+    final r = await _dio.get<Map<String, dynamic>>('/admin/users');
+    final data = r.data?['data'];
+    if (data is! List) return [];
+    return data.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+  }
+
+  Future<List<Map<String, dynamic>>> adminReservations({
+    String? from,
+    String? to,
+  }) async {
+    final qp = <String, dynamic>{};
+    if (from != null && from.isNotEmpty) qp['from'] = from;
+    if (to != null && to.isNotEmpty) qp['to'] = to;
+    final r = await _dio.get<Map<String, dynamic>>(
+      '/admin/reservations',
+      queryParameters: qp.isEmpty ? null : qp,
+    );
+    final data = r.data?['data'];
+    if (data is! List) return [];
+    return data.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+  }
+
+  Future<void> adminDeleteReservation(int id) async {
+    await _dio.delete<void>('/admin/reservations/$id');
+  }
+
+  Future<List<Map<String, dynamic>>> adminTerrainDayBlocks({int? terrainId}) async {
+    final qp = <String, dynamic>{};
+    if (terrainId != null) qp['terrain_id'] = terrainId;
+    final r = await _dio.get<Map<String, dynamic>>(
+      '/admin/terrain-day-blocks',
+      queryParameters: qp.isEmpty ? null : qp,
+    );
+    final data = r.data?['data'];
+    if (data is! List) return [];
+    return data.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+  }
+
+  Future<void> adminCreateTerrainDayBlock({
+    required int terrainId,
+    required String blockDate,
+  }) async {
+    await _dio.post<void>(
+      '/admin/terrain-day-blocks',
+      data: {'terrain_id': terrainId, 'block_date': blockDate},
+    );
+  }
+
+  Future<void> adminDeleteTerrainDayBlock(int id) async {
+    await _dio.delete<void>('/admin/terrain-day-blocks/$id');
+  }
+
+  Future<List<Map<String, dynamic>>> adminSlotBlocks({int? terrainId}) async {
+    final qp = <String, dynamic>{};
+    if (terrainId != null) qp['terrain_id'] = terrainId;
+    final r = await _dio.get<Map<String, dynamic>>(
+      '/admin/slot-blocks',
+      queryParameters: qp.isEmpty ? null : qp,
+    );
+    final data = r.data?['data'];
+    if (data is! List) return [];
+    return data.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+  }
+
+  Future<void> adminCreateSlotBlock({
+    required int terrainId,
+    required String blockDate,
+    required String startTime,
+    required String endTime,
+  }) async {
+    await _dio.post<void>(
+      '/admin/slot-blocks',
+      data: {
+        'terrain_id': terrainId,
+        'block_date': blockDate,
+        'start_time': startTime,
+        'end_time': endTime,
+      },
+    );
+  }
+
+  Future<void> adminDeleteSlotBlock(int id) async {
+    await _dio.delete<void>('/admin/slot-blocks/$id');
+  }
 }
 
 /// Convertit les erreurs Dio (avec [ApiException] dans `error`) en message lisible.

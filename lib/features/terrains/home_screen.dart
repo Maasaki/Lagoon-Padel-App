@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/api/api_client.dart';
 import '../auth/auth_state.dart';
 import '../auth/widgets/auth_sheet.dart';
+import '../../dashboard/dashboard_shell.dart';
 import '../../widgets/lagoon_logo.dart';
 import '../../widgets/loading_overlay.dart';
 import '../../widgets/terrain_card.dart';
@@ -62,12 +63,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: const Icon(Icons.account_circle_outlined),
                   onSelected: (v) {
                     if (v == 'out') auth.logout();
+                    if (v == 'admin') {
+                      Navigator.of(context).push<void>(
+                        MaterialPageRoute<void>(
+                          builder: (ctx) => DashboardShell(api: widget.api),
+                        ),
+                      );
+                    }
                   },
                   itemBuilder: (ctx) => [
                     PopupMenuItem(
                       enabled: false,
                       child: Text(auth.userName ?? 'Compte'),
                     ),
+                    if (auth.isAdmin)
+                      const PopupMenuItem(
+                        value: 'admin',
+                        child: Text('Administration'),
+                      ),
                     const PopupMenuItem(value: 'out', child: Text('Déconnexion')),
                   ],
                 );

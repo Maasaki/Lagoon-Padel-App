@@ -1,4 +1,4 @@
-package com.example.lagoon_padel
+package pf.altyssystems.lagoonpadel
 
 import io.flutter.embedding.android.FlutterActivity
 

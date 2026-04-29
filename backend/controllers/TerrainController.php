@@ -6,7 +6,8 @@ final class TerrainController
 {
     public function __construct(
         private Terrain $terrains,
-        private Reservation $reservations
+        private Reservation $reservations,
+        private AvailabilityBlocks $blocks
     ) {
     }
 
@@ -40,13 +41,21 @@ final class TerrainController
             return;
         }
 
+        $this->reservations->cleanupExpiredPending();
         $booked = $this->reservations->bookedStartTimesForTerrainDate($id, $date);
         $bookedSet = array_flip($booked);
+        $terrainDayBlocked = $this->blocks->isTerrainDayBlocked($id, $date);
+        $blockedStarts = array_flip($this->blocks->blockedSlotStartTimes($id, $date));
 
         $slots = [];
         foreach (Slots::all() as $slot) {
             $start = $slot['start'];
             $available = !isset($bookedSet[$start]);
+            if ($terrainDayBlocked) {
+                $available = false;
+            } elseif (isset($blockedStarts[$start])) {
+                $available = false;
+            }
             $slots[] = [
                 'start_time' => substr($start, 0, 5),
                 'end_time' => substr($slot['end'], 0, 5),
